@@ -876,19 +876,38 @@
 
   // ---------- export ----------
   $('downloadBtn').addEventListener('click', () => {
-    if(!state.diffCanvas) return;
-    state.diffCanvas.toBlob((blob) => {
-      if(!blob) return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'redline-diff.png';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-    }, 'image/png');
+    console.log('[Redline] export clicked. diffCanvas ready?', !!state.diffCanvas);
+    if(!state.diffCanvas){
+      alert('No diff to export yet — load both plans and switch to Overlay diff mode first.');
+      return;
+    }
+    try{
+      state.diffCanvas.toBlob((blob) => {
+        console.log('[Redline] toBlob result:', blob);
+        if(!blob){
+          alert('Export failed: the canvas could not be converted to an image (toBlob returned null). This usually means the canvas is "tainted" by cross-origin content.');
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'redline-diff.png';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        console.log('[Redline] download triggered');
+      }, 'image/png');
+    }catch(err){
+      console.error('[Redline] export error:', err);
+      alert('Export failed: ' + err.message);
+    }
   });
+
+  window.addEventListener('error', (e) => {
+    console.error('[Redline] uncaught error:', e.message, e.filename, e.lineno);
+  });
+  console.log('[Redline] script initialized OK');
 
 })();
 </script>

@@ -875,25 +875,18 @@
   window.addEventListener('resize', () => { if(state.A.canvas && state.B.canvas) fitToView(); });
 
   // ---------- export ----------
-  let downloadsCap = null;
-  (async () => {
-    try{
-      if(window.claude && window.claude.use){
-        downloadsCap = await window.claude.use('downloads');
-      }
-    }catch(e){ downloadsCap = null; }
-    $('downloadBtn').style.display = (downloadsCap && state.A.canvas && state.B.canvas && state.mode==='overlay') ? 'inline-block' : 'none';
-  })();
-
-  $('downloadBtn').addEventListener('click', async () => {
+  $('downloadBtn').addEventListener('click', () => {
     if(!state.diffCanvas) return;
-    state.diffCanvas.toBlob(async (blob) => {
+    state.diffCanvas.toBlob((blob) => {
       if(!blob) return;
-      if(downloadsCap){
-        try{
-          await downloadsCap.save({ filename: 'redline-diff.png', data: blob });
-        }catch(e){ /* viewer declined or unavailable */ }
-      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'redline-diff.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
     }, 'image/png');
   });
 

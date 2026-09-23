@@ -646,6 +646,17 @@
     $('blinkControls').style.display = state.mode === 'blink' ? 'flex' : 'none';
     $('downloadBtn').style.display = state.mode === 'overlay' ? 'inline-block' : 'none';
 
+    // Blink mode repurposes these same canvas elements with absolute
+    // positioning + opacity toggling. Reset that before every render so a
+    // leftover state from Blink can't break Swipe/Side-by-side layout.
+    [state.A.canvas, state.alignedB].forEach(cv => {
+      if(!cv) return;
+      cv.style.position = '';
+      cv.style.top = '';
+      cv.style.left = '';
+      cv.style.opacity = '';
+    });
+
     if(state.mode === 'overlay'){
       if(state.diffCanvas) stage.appendChild(state.diffCanvas);
     } else if(state.mode === 'side'){

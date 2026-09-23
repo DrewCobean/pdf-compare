@@ -875,14 +875,68 @@
   window.addEventListener('resize', () => { if(state.A.canvas && state.B.canvas) fitToView(); });
 
   // ---------- export ----------
-  $('downloadBtn').addEventListener('click', () => {
+  function buildExportCanvas(){
+    const src = state.diffCanvas;
+    const barH = 56;
+    const out = document.createElement('canvas');
+    out.width = src.width;
+    out.height = src.height + barH;
+    const ctx = out.getContext('2d');
+
+    ctx.fillStyle = '#F6F4ED';
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.drawImage(src, 0, 0);
+
+    const barY = src.height;
+    ctx.fillStyle = '#F6F4ED';
+    ctx.fillRect(0, barY, out.width, barH);
+    ctx.strokeStyle = '#DCD8C9';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, barY + 0.5);
+    ctx.lineTo(out.width, barY + 0.5);
+    ctx.stroke();
+
+    const midY = barY + barH / 2;
+    const items = [
+      { color: '#B23B2E', label: 'Removed' },
+      { color: '#2C5E8A', label: 'Added' },
+      { color: '#34383A', label: 'Unchanged' },
+    ];
+    let x = 22;
+    ctx.textBaseline = 'middle';
+    ctx.font = '600 15px "IBM Plex Sans", Arial, sans-serif';
+    items.forEach(item => {
+      ctx.fillStyle = item.color;
+      ctx.beginPath();
+      ctx.arc(x + 7, midY, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#23262B';
+      ctx.fillText(item.label, x + 22, midY);
+      x += ctx.measureText(item.label).width + 55;
+    });
+
+    const nameA = state.A.name || 'previous';
+    const nameB = state.B.name || 'current';
+    ctx.font = '500 12px "IBM Plex Mono", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#666B62';
+    ctx.fillText(`${nameA}  →  ${nameB}`, out.width - 20, midY);
+    ctx.textAlign = 'left';
+
+    return out;
+  }
+
+  $('downloadBtn').addEventListener('click', async () => {
     console.log('[Redline] export clicked. diffCanvas ready?', !!state.diffCanvas);
     if(!state.diffCanvas){
       alert('No diff to export yet — load both plans and switch to Overlay diff mode first.');
       return;
     }
     try{
-      state.diffCanvas.toBlob((blob) => {
+      if(document.fonts && document.fonts.ready) await document.fonts.ready;
+      const exportCanvas = buildExportCanvas();
+      exportCanvas.toBlob((blob) => {
         console.log('[Redline] toBlob result:', blob);
         if(!blob){
           alert('Export failed: the canvas could not be converted to an image (toBlob returned null). This usually means the canvas is "tainted" by cross-origin content.');

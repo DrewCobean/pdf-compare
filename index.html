@@ -555,8 +555,9 @@
     if(state.A.canvas && state.B.canvas){
       recompute();
       fitToView();
+    } else {
+      renderView();
     }
-    renderView();
   }
 
   // ---------- geometry / diff ----------
@@ -646,7 +647,7 @@
     $('downloadBtn').style.display = state.mode === 'overlay' ? 'inline-block' : 'none';
 
     if(state.mode === 'overlay'){
-      stage.appendChild(state.diffCanvas);
+      if(state.diffCanvas) stage.appendChild(state.diffCanvas);
     } else if(state.mode === 'side'){
       const wrap = document.createElement('div');
       wrap.className = 'sidebyside';
